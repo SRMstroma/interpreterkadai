@@ -1,0 +1,1494 @@
+   0  $accept : %entry% $end
+
+   1  main : LET ID EQ expr COMEND
+   2       | LET REC ID ID EQ expr COMEND
+   3       | LET REC lr COMEND
+   4       | expr COMEND
+   5       | expr EOF
+
+   6  expr : FUN ID ARROW expr
+   7       | LET ID EQ expr IN expr
+   8       | LET REC ID ID EQ expr IN expr
+   9       | LET REC lr IN expr
+  10       | MATCH expr WITH pattern ARROW expr pats
+  11       | IF expr THEN expr ELSE expr
+  12       | arith_expr EQ arith_expr
+  13       | arith_expr LE arith_expr
+  14       | arith_expr DCOLON expr
+  15       | arith_expr
+  16       | LPAR expr COMMA expr pairs
+
+  17  lr : atlr AND lr
+  18     | atlr AND atlr
+
+  19  atlr : ID ID EQ expr
+
+  20  arith_expr : arith_expr PLUS factor_expr
+  21             | arith_expr MINUS factor_expr
+  22             | factor_expr
+
+  23  factor_expr : factor_expr MUL app_expr
+  24              | factor_expr DIV app_expr
+  25              | app_expr
+
+  26  app_expr : app_expr atomic_expr
+  27           | atomic_expr
+
+  28  atomic_expr : INT
+  29              | BOOL
+  30              | ID
+  31              | NIL
+  32              | LPAR expr RPAR
+
+  33  pats : BAR pattern ARROW expr pats
+  34       | END
+
+  35  pattern : at_pat DCOLON pattern
+  36          | LPAR pattern COMMA pattern ppairs
+  37          | at_pat
+
+  38  at_pat : INT
+  39         | BOOL
+  40         | ID
+  41         | NIL
+  42         | LPAR pattern RPAR
+
+  43  pairs : COMMA expr pairs
+  44        | RPAR
+
+  45  ppairs : COMMA pattern ppairs
+  46         | RPAR
+
+  47  %entry% : '\001' main
+
+state 0
+	$accept : . %entry% $end  (0)
+
+	'\001'  shift 1
+	.  error
+
+	%entry%  goto 2
+
+
+state 1
+	%entry% : '\001' . main  (47)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 7
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	main  goto 12
+	expr  goto 13
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 2
+	$accept : %entry% . $end  (0)
+
+	$end  accept
+
+
+state 3
+	atomic_expr : INT .  (28)
+
+	.  reduce 28
+
+
+state 4
+	atomic_expr : ID .  (30)
+
+	.  reduce 30
+
+
+state 5
+	atomic_expr : BOOL .  (29)
+
+	.  reduce 29
+
+
+state 6
+	expr : IF . expr THEN expr ELSE expr  (11)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 19
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 7
+	main : LET . ID EQ expr COMEND  (1)
+	main : LET . REC ID ID EQ expr COMEND  (2)
+	main : LET . REC lr COMEND  (3)
+	expr : LET . ID EQ expr IN expr  (7)
+	expr : LET . REC ID ID EQ expr IN expr  (8)
+	expr : LET . REC lr IN expr  (9)
+
+	ID  shift 20
+	REC  shift 21
+	.  error
+
+
+state 8
+	expr : FUN . ID ARROW expr  (6)
+
+	ID  shift 22
+	.  error
+
+
+state 9
+	expr : MATCH . expr WITH pattern ARROW expr pats  (10)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 23
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 10
+	expr : LPAR . expr COMMA expr pairs  (16)
+	atomic_expr : LPAR . expr RPAR  (32)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 24
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 11
+	atomic_expr : NIL .  (31)
+
+	.  reduce 31
+
+
+state 12
+	%entry% : '\001' main .  (47)
+
+	.  reduce 47
+
+
+state 13
+	main : expr . COMEND  (4)
+	main : expr . EOF  (5)
+
+	COMEND  shift 25
+	EOF  shift 26
+	.  error
+
+
+state 14
+	expr : arith_expr . EQ arith_expr  (12)
+	expr : arith_expr . LE arith_expr  (13)
+	expr : arith_expr . DCOLON expr  (14)
+	expr : arith_expr .  (15)
+	arith_expr : arith_expr . PLUS factor_expr  (20)
+	arith_expr : arith_expr . MINUS factor_expr  (21)
+
+	PLUS  shift 27
+	MINUS  shift 28
+	EQ  shift 29
+	LE  shift 30
+	DCOLON  shift 31
+	THEN  reduce 15
+	ELSE  reduce 15
+	IN  reduce 15
+	AND  reduce 15
+	WITH  reduce 15
+	BAR  reduce 15
+	END  reduce 15
+	RPAR  reduce 15
+	COMMA  reduce 15
+	COMEND  reduce 15
+	EOF  reduce 15
+
+
+state 15
+	arith_expr : factor_expr .  (22)
+	factor_expr : factor_expr . MUL app_expr  (23)
+	factor_expr : factor_expr . DIV app_expr  (24)
+
+	MUL  shift 32
+	DIV  shift 33
+	THEN  reduce 22
+	ELSE  reduce 22
+	IN  reduce 22
+	AND  reduce 22
+	WITH  reduce 22
+	BAR  reduce 22
+	END  reduce 22
+	PLUS  reduce 22
+	MINUS  reduce 22
+	EQ  reduce 22
+	LE  reduce 22
+	RPAR  reduce 22
+	COMMA  reduce 22
+	DCOLON  reduce 22
+	COMEND  reduce 22
+	EOF  reduce 22
+
+
+state 16
+	factor_expr : app_expr .  (25)
+	app_expr : app_expr . atomic_expr  (26)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	LPAR  shift 34
+	NIL  shift 11
+	THEN  reduce 25
+	ELSE  reduce 25
+	IN  reduce 25
+	AND  reduce 25
+	WITH  reduce 25
+	BAR  reduce 25
+	END  reduce 25
+	PLUS  reduce 25
+	MINUS  reduce 25
+	MUL  reduce 25
+	DIV  reduce 25
+	EQ  reduce 25
+	LE  reduce 25
+	RPAR  reduce 25
+	COMMA  reduce 25
+	DCOLON  reduce 25
+	COMEND  reduce 25
+	EOF  reduce 25
+
+	atomic_expr  goto 35
+
+
+state 17
+	app_expr : atomic_expr .  (27)
+
+	.  reduce 27
+
+
+state 18
+	expr : LET . ID EQ expr IN expr  (7)
+	expr : LET . REC ID ID EQ expr IN expr  (8)
+	expr : LET . REC lr IN expr  (9)
+
+	ID  shift 36
+	REC  shift 37
+	.  error
+
+
+state 19
+	expr : IF expr . THEN expr ELSE expr  (11)
+
+	THEN  shift 38
+	.  error
+
+
+state 20
+	main : LET ID . EQ expr COMEND  (1)
+	expr : LET ID . EQ expr IN expr  (7)
+
+	EQ  shift 39
+	.  error
+
+
+state 21
+	main : LET REC . ID ID EQ expr COMEND  (2)
+	main : LET REC . lr COMEND  (3)
+	expr : LET REC . ID ID EQ expr IN expr  (8)
+	expr : LET REC . lr IN expr  (9)
+
+	ID  shift 40
+	.  error
+
+	lr  goto 41
+	atlr  goto 42
+
+
+state 22
+	expr : FUN ID . ARROW expr  (6)
+
+	ARROW  shift 43
+	.  error
+
+
+state 23
+	expr : MATCH expr . WITH pattern ARROW expr pats  (10)
+
+	WITH  shift 44
+	.  error
+
+
+state 24
+	expr : LPAR expr . COMMA expr pairs  (16)
+	atomic_expr : LPAR expr . RPAR  (32)
+
+	RPAR  shift 45
+	COMMA  shift 46
+	.  error
+
+
+state 25
+	main : expr COMEND .  (4)
+
+	.  reduce 4
+
+
+state 26
+	main : expr EOF .  (5)
+
+	.  reduce 5
+
+
+state 27
+	arith_expr : arith_expr PLUS . factor_expr  (20)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	LPAR  shift 34
+	NIL  shift 11
+	.  error
+
+	factor_expr  goto 47
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 28
+	arith_expr : arith_expr MINUS . factor_expr  (21)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	LPAR  shift 34
+	NIL  shift 11
+	.  error
+
+	factor_expr  goto 48
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 29
+	expr : arith_expr EQ . arith_expr  (12)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	LPAR  shift 34
+	NIL  shift 11
+	.  error
+
+	arith_expr  goto 49
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 30
+	expr : arith_expr LE . arith_expr  (13)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	LPAR  shift 34
+	NIL  shift 11
+	.  error
+
+	arith_expr  goto 50
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 31
+	expr : arith_expr DCOLON . expr  (14)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 51
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 32
+	factor_expr : factor_expr MUL . app_expr  (23)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	LPAR  shift 34
+	NIL  shift 11
+	.  error
+
+	app_expr  goto 52
+	atomic_expr  goto 17
+
+
+state 33
+	factor_expr : factor_expr DIV . app_expr  (24)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	LPAR  shift 34
+	NIL  shift 11
+	.  error
+
+	app_expr  goto 53
+	atomic_expr  goto 17
+
+
+state 34
+	atomic_expr : LPAR . expr RPAR  (32)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 54
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 35
+	app_expr : app_expr atomic_expr .  (26)
+
+	.  reduce 26
+
+
+state 36
+	expr : LET ID . EQ expr IN expr  (7)
+
+	EQ  shift 55
+	.  error
+
+
+state 37
+	expr : LET REC . ID ID EQ expr IN expr  (8)
+	expr : LET REC . lr IN expr  (9)
+
+	ID  shift 56
+	.  error
+
+	lr  goto 57
+	atlr  goto 42
+
+
+state 38
+	expr : IF expr THEN . expr ELSE expr  (11)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 58
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 39
+	main : LET ID EQ . expr COMEND  (1)
+	expr : LET ID EQ . expr IN expr  (7)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 59
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 40
+	main : LET REC ID . ID EQ expr COMEND  (2)
+	expr : LET REC ID . ID EQ expr IN expr  (8)
+	atlr : ID . ID EQ expr  (19)
+
+	ID  shift 60
+	.  error
+
+
+state 41
+	main : LET REC lr . COMEND  (3)
+	expr : LET REC lr . IN expr  (9)
+
+	IN  shift 61
+	COMEND  shift 62
+	.  error
+
+
+state 42
+	lr : atlr . AND lr  (17)
+	lr : atlr . AND atlr  (18)
+
+	AND  shift 63
+	.  error
+
+
+state 43
+	expr : FUN ID ARROW . expr  (6)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 64
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 44
+	expr : MATCH expr WITH . pattern ARROW expr pats  (10)
+
+	INT  shift 65
+	ID  shift 66
+	BOOL  shift 67
+	LPAR  shift 68
+	NIL  shift 69
+	.  error
+
+	pattern  goto 70
+	at_pat  goto 71
+
+
+state 45
+	atomic_expr : LPAR expr RPAR .  (32)
+
+	.  reduce 32
+
+
+state 46
+	expr : LPAR expr COMMA . expr pairs  (16)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 72
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 47
+	arith_expr : arith_expr PLUS factor_expr .  (20)
+	factor_expr : factor_expr . MUL app_expr  (23)
+	factor_expr : factor_expr . DIV app_expr  (24)
+
+	MUL  shift 32
+	DIV  shift 33
+	THEN  reduce 20
+	ELSE  reduce 20
+	IN  reduce 20
+	AND  reduce 20
+	WITH  reduce 20
+	BAR  reduce 20
+	END  reduce 20
+	PLUS  reduce 20
+	MINUS  reduce 20
+	EQ  reduce 20
+	LE  reduce 20
+	RPAR  reduce 20
+	COMMA  reduce 20
+	DCOLON  reduce 20
+	COMEND  reduce 20
+	EOF  reduce 20
+
+
+state 48
+	arith_expr : arith_expr MINUS factor_expr .  (21)
+	factor_expr : factor_expr . MUL app_expr  (23)
+	factor_expr : factor_expr . DIV app_expr  (24)
+
+	MUL  shift 32
+	DIV  shift 33
+	THEN  reduce 21
+	ELSE  reduce 21
+	IN  reduce 21
+	AND  reduce 21
+	WITH  reduce 21
+	BAR  reduce 21
+	END  reduce 21
+	PLUS  reduce 21
+	MINUS  reduce 21
+	EQ  reduce 21
+	LE  reduce 21
+	RPAR  reduce 21
+	COMMA  reduce 21
+	DCOLON  reduce 21
+	COMEND  reduce 21
+	EOF  reduce 21
+
+
+state 49
+	expr : arith_expr EQ arith_expr .  (12)
+	arith_expr : arith_expr . PLUS factor_expr  (20)
+	arith_expr : arith_expr . MINUS factor_expr  (21)
+
+	PLUS  shift 27
+	MINUS  shift 28
+	THEN  reduce 12
+	ELSE  reduce 12
+	IN  reduce 12
+	AND  reduce 12
+	WITH  reduce 12
+	BAR  reduce 12
+	END  reduce 12
+	RPAR  reduce 12
+	COMMA  reduce 12
+	COMEND  reduce 12
+	EOF  reduce 12
+
+
+state 50
+	expr : arith_expr LE arith_expr .  (13)
+	arith_expr : arith_expr . PLUS factor_expr  (20)
+	arith_expr : arith_expr . MINUS factor_expr  (21)
+
+	PLUS  shift 27
+	MINUS  shift 28
+	THEN  reduce 13
+	ELSE  reduce 13
+	IN  reduce 13
+	AND  reduce 13
+	WITH  reduce 13
+	BAR  reduce 13
+	END  reduce 13
+	RPAR  reduce 13
+	COMMA  reduce 13
+	COMEND  reduce 13
+	EOF  reduce 13
+
+
+state 51
+	expr : arith_expr DCOLON expr .  (14)
+
+	.  reduce 14
+
+
+state 52
+	factor_expr : factor_expr MUL app_expr .  (23)
+	app_expr : app_expr . atomic_expr  (26)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	LPAR  shift 34
+	NIL  shift 11
+	THEN  reduce 23
+	ELSE  reduce 23
+	IN  reduce 23
+	AND  reduce 23
+	WITH  reduce 23
+	BAR  reduce 23
+	END  reduce 23
+	PLUS  reduce 23
+	MINUS  reduce 23
+	MUL  reduce 23
+	DIV  reduce 23
+	EQ  reduce 23
+	LE  reduce 23
+	RPAR  reduce 23
+	COMMA  reduce 23
+	DCOLON  reduce 23
+	COMEND  reduce 23
+	EOF  reduce 23
+
+	atomic_expr  goto 35
+
+
+state 53
+	factor_expr : factor_expr DIV app_expr .  (24)
+	app_expr : app_expr . atomic_expr  (26)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	LPAR  shift 34
+	NIL  shift 11
+	THEN  reduce 24
+	ELSE  reduce 24
+	IN  reduce 24
+	AND  reduce 24
+	WITH  reduce 24
+	BAR  reduce 24
+	END  reduce 24
+	PLUS  reduce 24
+	MINUS  reduce 24
+	MUL  reduce 24
+	DIV  reduce 24
+	EQ  reduce 24
+	LE  reduce 24
+	RPAR  reduce 24
+	COMMA  reduce 24
+	DCOLON  reduce 24
+	COMEND  reduce 24
+	EOF  reduce 24
+
+	atomic_expr  goto 35
+
+
+state 54
+	atomic_expr : LPAR expr . RPAR  (32)
+
+	RPAR  shift 45
+	.  error
+
+
+state 55
+	expr : LET ID EQ . expr IN expr  (7)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 73
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 56
+	expr : LET REC ID . ID EQ expr IN expr  (8)
+	atlr : ID . ID EQ expr  (19)
+
+	ID  shift 74
+	.  error
+
+
+state 57
+	expr : LET REC lr . IN expr  (9)
+
+	IN  shift 61
+	.  error
+
+
+state 58
+	expr : IF expr THEN expr . ELSE expr  (11)
+
+	ELSE  shift 75
+	.  error
+
+
+state 59
+	main : LET ID EQ expr . COMEND  (1)
+	expr : LET ID EQ expr . IN expr  (7)
+
+	IN  shift 76
+	COMEND  shift 77
+	.  error
+
+
+state 60
+	main : LET REC ID ID . EQ expr COMEND  (2)
+	expr : LET REC ID ID . EQ expr IN expr  (8)
+	atlr : ID ID . EQ expr  (19)
+
+	EQ  shift 78
+	.  error
+
+
+state 61
+	expr : LET REC lr IN . expr  (9)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 79
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 62
+	main : LET REC lr COMEND .  (3)
+
+	.  reduce 3
+
+
+state 63
+	lr : atlr AND . lr  (17)
+	lr : atlr AND . atlr  (18)
+
+	ID  shift 80
+	.  error
+
+	lr  goto 81
+	atlr  goto 82
+
+
+state 64
+	expr : FUN ID ARROW expr .  (6)
+
+	.  reduce 6
+
+
+state 65
+	at_pat : INT .  (38)
+
+	.  reduce 38
+
+
+state 66
+	at_pat : ID .  (40)
+
+	.  reduce 40
+
+
+state 67
+	at_pat : BOOL .  (39)
+
+	.  reduce 39
+
+
+state 68
+	pattern : LPAR . pattern COMMA pattern ppairs  (36)
+	at_pat : LPAR . pattern RPAR  (42)
+
+	INT  shift 65
+	ID  shift 66
+	BOOL  shift 67
+	LPAR  shift 68
+	NIL  shift 69
+	.  error
+
+	pattern  goto 83
+	at_pat  goto 71
+
+
+state 69
+	at_pat : NIL .  (41)
+
+	.  reduce 41
+
+
+state 70
+	expr : MATCH expr WITH pattern . ARROW expr pats  (10)
+
+	ARROW  shift 84
+	.  error
+
+
+state 71
+	pattern : at_pat . DCOLON pattern  (35)
+	pattern : at_pat .  (37)
+
+	DCOLON  shift 85
+	ARROW  reduce 37
+	RPAR  reduce 37
+	COMMA  reduce 37
+
+
+state 72
+	expr : LPAR expr COMMA expr . pairs  (16)
+
+	RPAR  shift 86
+	COMMA  shift 87
+	.  error
+
+	pairs  goto 88
+
+
+state 73
+	expr : LET ID EQ expr . IN expr  (7)
+
+	IN  shift 76
+	.  error
+
+
+state 74
+	expr : LET REC ID ID . EQ expr IN expr  (8)
+	atlr : ID ID . EQ expr  (19)
+
+	EQ  shift 89
+	.  error
+
+
+state 75
+	expr : IF expr THEN expr ELSE . expr  (11)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 90
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 76
+	expr : LET ID EQ expr IN . expr  (7)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 91
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 77
+	main : LET ID EQ expr COMEND .  (1)
+
+	.  reduce 1
+
+
+state 78
+	main : LET REC ID ID EQ . expr COMEND  (2)
+	expr : LET REC ID ID EQ . expr IN expr  (8)
+	atlr : ID ID EQ . expr  (19)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 92
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 79
+	expr : LET REC lr IN expr .  (9)
+
+	.  reduce 9
+
+
+state 80
+	atlr : ID . ID EQ expr  (19)
+
+	ID  shift 93
+	.  error
+
+
+state 81
+	lr : atlr AND lr .  (17)
+
+	.  reduce 17
+
+
+state 82
+	lr : atlr . AND lr  (17)
+	lr : atlr . AND atlr  (18)
+	lr : atlr AND atlr .  (18)
+
+	AND  shift 63
+	IN  reduce 18
+	COMEND  reduce 18
+
+
+state 83
+	pattern : LPAR pattern . COMMA pattern ppairs  (36)
+	at_pat : LPAR pattern . RPAR  (42)
+
+	RPAR  shift 94
+	COMMA  shift 95
+	.  error
+
+
+state 84
+	expr : MATCH expr WITH pattern ARROW . expr pats  (10)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 96
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 85
+	pattern : at_pat DCOLON . pattern  (35)
+
+	INT  shift 65
+	ID  shift 66
+	BOOL  shift 67
+	LPAR  shift 68
+	NIL  shift 69
+	.  error
+
+	pattern  goto 97
+	at_pat  goto 71
+
+
+state 86
+	pairs : RPAR .  (44)
+
+	.  reduce 44
+
+
+state 87
+	pairs : COMMA . expr pairs  (43)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 98
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 88
+	expr : LPAR expr COMMA expr pairs .  (16)
+
+	.  reduce 16
+
+
+state 89
+	expr : LET REC ID ID EQ . expr IN expr  (8)
+	atlr : ID ID EQ . expr  (19)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 99
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 90
+	expr : IF expr THEN expr ELSE expr .  (11)
+
+	.  reduce 11
+
+
+state 91
+	expr : LET ID EQ expr IN expr .  (7)
+
+	.  reduce 7
+
+
+state 92
+	main : LET REC ID ID EQ expr . COMEND  (2)
+	expr : LET REC ID ID EQ expr . IN expr  (8)
+	atlr : ID ID EQ expr .  (19)
+
+	IN  shift 100
+	COMEND  shift 101
+	AND  reduce 19
+
+
+state 93
+	atlr : ID ID . EQ expr  (19)
+
+	EQ  shift 102
+	.  error
+
+
+state 94
+	at_pat : LPAR pattern RPAR .  (42)
+
+	.  reduce 42
+
+
+state 95
+	pattern : LPAR pattern COMMA . pattern ppairs  (36)
+
+	INT  shift 65
+	ID  shift 66
+	BOOL  shift 67
+	LPAR  shift 68
+	NIL  shift 69
+	.  error
+
+	pattern  goto 103
+	at_pat  goto 71
+
+
+state 96
+	expr : MATCH expr WITH pattern ARROW expr . pats  (10)
+
+	BAR  shift 104
+	END  shift 105
+	.  error
+
+	pats  goto 106
+
+
+state 97
+	pattern : at_pat DCOLON pattern .  (35)
+
+	.  reduce 35
+
+
+state 98
+	pairs : COMMA expr . pairs  (43)
+
+	RPAR  shift 86
+	COMMA  shift 87
+	.  error
+
+	pairs  goto 107
+
+
+state 99
+	expr : LET REC ID ID EQ expr . IN expr  (8)
+	atlr : ID ID EQ expr .  (19)
+
+	IN  shift 100
+	AND  reduce 19
+
+
+state 100
+	expr : LET REC ID ID EQ expr IN . expr  (8)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 108
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 101
+	main : LET REC ID ID EQ expr COMEND .  (2)
+
+	.  reduce 2
+
+
+state 102
+	atlr : ID ID EQ . expr  (19)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 109
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 103
+	pattern : LPAR pattern COMMA pattern . ppairs  (36)
+
+	RPAR  shift 110
+	COMMA  shift 111
+	.  error
+
+	ppairs  goto 112
+
+
+state 104
+	pats : BAR . pattern ARROW expr pats  (33)
+
+	INT  shift 65
+	ID  shift 66
+	BOOL  shift 67
+	LPAR  shift 68
+	NIL  shift 69
+	.  error
+
+	pattern  goto 113
+	at_pat  goto 71
+
+
+state 105
+	pats : END .  (34)
+
+	.  reduce 34
+
+
+state 106
+	expr : MATCH expr WITH pattern ARROW expr pats .  (10)
+
+	.  reduce 10
+
+
+state 107
+	pairs : COMMA expr pairs .  (43)
+
+	.  reduce 43
+
+
+state 108
+	expr : LET REC ID ID EQ expr IN expr .  (8)
+
+	.  reduce 8
+
+
+state 109
+	atlr : ID ID EQ expr .  (19)
+
+	.  reduce 19
+
+
+state 110
+	ppairs : RPAR .  (46)
+
+	.  reduce 46
+
+
+state 111
+	ppairs : COMMA . pattern ppairs  (45)
+
+	INT  shift 65
+	ID  shift 66
+	BOOL  shift 67
+	LPAR  shift 68
+	NIL  shift 69
+	.  error
+
+	pattern  goto 114
+	at_pat  goto 71
+
+
+state 112
+	pattern : LPAR pattern COMMA pattern ppairs .  (36)
+
+	.  reduce 36
+
+
+state 113
+	pats : BAR pattern . ARROW expr pats  (33)
+
+	ARROW  shift 115
+	.  error
+
+
+state 114
+	ppairs : COMMA pattern . ppairs  (45)
+
+	RPAR  shift 110
+	COMMA  shift 111
+	.  error
+
+	ppairs  goto 116
+
+
+state 115
+	pats : BAR pattern ARROW . expr pats  (33)
+
+	INT  shift 3
+	ID  shift 4
+	BOOL  shift 5
+	IF  shift 6
+	LET  shift 18
+	FUN  shift 8
+	MATCH  shift 9
+	LPAR  shift 10
+	NIL  shift 11
+	.  error
+
+	expr  goto 117
+	arith_expr  goto 14
+	factor_expr  goto 15
+	app_expr  goto 16
+	atomic_expr  goto 17
+
+
+state 116
+	ppairs : COMMA pattern ppairs .  (45)
+
+	.  reduce 45
+
+
+state 117
+	pats : BAR pattern ARROW expr . pats  (33)
+
+	BAR  shift 104
+	END  shift 105
+	.  error
+
+	pats  goto 118
+
+
+state 118
+	pats : BAR pattern ARROW expr pats .  (33)
+
+	.  reduce 33
+
+
+32 terminals, 15 nonterminals
+48 grammar rules, 119 states
