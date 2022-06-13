@@ -23,8 +23,12 @@ and expr = EValue of value
            |ERecIn of (id * id * expr * expr)
            |EMatch of (expr * ((pat * expr) list))
            |ERecAndIn of ((id * id * expr) list) * expr
+                       
+type thunk = expr * nenvir
 
+and name_value = NVInt of int | NVBool of bool | NVId of id | NVList of value * value | VNil | NVPair of value list |NVFun of id * envir * expr | NVRecFun of id * id * envir * expr | NVRecFunAnd of int * id * id * envir * expr | NVRecFun2 of int * id * id * envir * expr | NVRecFun3 of int * (id * id * expr) list * envir | NVThunk of thunk
 
+and nenvir = (id * thunk) list
 
 type command = CExp of expr | Let of id * expr |LetRec of id * id * expr |LetRecAnd of (id * id * expr) list
 
@@ -166,7 +170,7 @@ and get_func n l = match l with
 
 and e_recandnew l oril env n = match l with
  [] -> []
- |(f, x, e) :: rest -> saving := ((f, VRecFun3 (n, oril, (!saving @ (e_recandnew rest oril env (n+1)) @ env))) :: !saving);
+ |(f, x, e) :: rest -> saving := ((f, VRecFun3 (n, oril, (!saving @ (e_recandnew rest oril env (n+1)) @ env))) :: env);
  (f, VRecFun3 (n, oril, (!saving @ e_recandnew rest oril env (n+1) @ env))) :: (e_recandnew rest oril env (n+1))
 
 and get_andlist (l : ((id * value) list) list) (n : int) (cn : int) : (id * value) list = match l with(*n番目のlistを取り出す*)
@@ -175,8 +179,17 @@ and get_andlist (l : ((id * value) list) list) (n : int) (cn : int) : (id * valu
 
 and renew_andlist l nl n cn = match l with(*list更新*)
  [] -> []
-|x :: rest -> if n = cn then nl :: rest else x :: renew_andlist rest nl n (cn - 1);;
-
+  |x :: rest -> if n = cn then nl :: rest else x :: renew_andlist rest nl n (cn - 1);;
+(*NVThunk : expr * nenvir*)
+let eval_name (t : thunk) : name_value = let (e, env) = t in match e with
+     EValue v -> v
+    |EBin (bop, a, b) -> match bop with
+                          OpAdd -> (match (eval_name (a, env), eval_name (b, env)) with
+                                      (NVInt aa, NVInt bb) -> NVInt (aa + bb)
+                                     |(NVThunk th, NVInt _) -> NVThunk (EBin (bop, (eval_name th), b), env)
+                                     |(NVInt _, NVThunk th) -> NVThunk
+                                   )
+                                    
 let print_id:id -> unit = function
  VString s -> print_string s;;
 
@@ -245,8 +258,8 @@ let rec print_ty (t : ty) = match t with
 |TFun (t1, t2) -> print_string "(";print_ty t1;print_string "-> ";print_ty t2;print_string ")"
 |TVar s -> print_string s;print_string " "
 |TPair l -> (match l with
-            [] -> print_string "pair "
-           |x :: [] -> print_ty x;print_string "pair "
+            [] -> ()
+           |x :: [] -> print_ty x;print_string " "
            |x :: rest -> print_ty x;print_string "* ";print_ty (TPair rest))
 |TList lty -> print_ty lty;print_string "list "
 
@@ -437,13 +450,15 @@ Pv v ->  (match v with VInt _ -> (TInt, [], [])
                      |VNil -> (new_ty_var (), [], [])
                      |_ -> raise Match_error)
 |Pl (f, s) -> let (fty, fenv, fcon) = gather_ty_constraints_pattern f in
-             let (sty, senv, scon) = gather_ty_constraints_pattern s in
-             (match sty with
+              let (sty, senv, scon) = gather_ty_constraints_pattern s in
+              
+             (match sty with(*nasi*)
              TList ssty -> (TList fty, fenv @ senv, (fty, ssty) :: fcon @ scon)
-            |_ ->  (TList fty, fenv @ senv, (fty, sty) :: fcon @ scon))
+            |_ ->  (TList fty, fenv @ senv, fcon @ scon))
 |Pp l -> let (t, ec) = List.split (gather_ty_constraints_pair_pattern l) in
          let (e, c) = List.split ec in
          (TPair t, list_comb e, list_comb c)
+         
 
 and decide_e1 l tye : (ty * ty_constraints) list = match l with
                        [] -> []
@@ -457,7 +472,7 @@ let rec renew_ty_env (te : ty_env) (ts : ty_subst) = match te with
 
 let infer_expr (te : ty_env) (e : expr) : ty * ty_env =
  let (t, c)  = gather_ty_constraints te e
- in (*print_ty t;print_string " ";*)print_type_constraints c;let tuc = ty_unify c in let retty = apply_ty_subst tuc t
+ in (*print_ty t;print_string " ";print_type_constraints c;*)let tuc = ty_unify c in let retty = apply_ty_subst tuc t
     in (retty, renew_ty_env te tuc)
 
 let rec recandcons (te : ty_env) (l : (id * id * expr) list) : ty_constraints =
